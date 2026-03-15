@@ -1,0 +1,18 @@
+name: Keep Alive
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # 每5分钟ping一次
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Gemini API
+        run: |
+          curl -X POST https://phishwatch-gemini-api.onrender.com/ask-ai \
+            -H "Content-Type: application/json" \
+            -H "X-EXTENSION-TOKEN: ${{ secrets.EXTENSION_TOKEN }}" \
+            -d '{"url":"ping","risk_score":0,"signals":["ping"],"question":"ping"}' \
+            --max-time 30 || true
