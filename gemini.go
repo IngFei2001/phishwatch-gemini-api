@@ -12,7 +12,8 @@ import (
 var GEMINI_KEY = os.Getenv("GEMINI_API_KEY")
 
 func askGemini(prompt string) (string, error) {
-	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + GEMINI_KEY
+	geminiKey := os.Getenv("GEMINI_API_KEY")
+	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + geminiKey
 
 	body := map[string]interface{}{
 		"contents": []map[string]interface{}{
