@@ -21,7 +21,9 @@ type AskResponse struct {
 
 func askAIHandler(w http.ResponseWriter, r *http.Request) {
 	token := os.Getenv("EXTENSION_TOKEN")
+	fmt.Println("[PhishWatch] Request received")
 	if r.Header.Get("X-EXTENSION-TOKEN") != token {
+		fmt.Println("[PhishWatch] Unauthorized")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -35,6 +37,7 @@ func askAIHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
+	fmt.Println("[PhishWatch] Calling Gemini for URL:", req.URL)
 	prompt := fmt.Sprintf(`
 You are a Web3 phishing security assistant called PhishWatch AI.
 Website: %s
@@ -45,12 +48,13 @@ User Question:
 Explain clearly whether the website is safe or risky.
 Give a short security recommendation.
 `, req.URL, req.RiskScore, strings.Join(req.Signals, ", "), req.Question)
-
 	answer, err := askGemini(prompt)
 	if err != nil {
+		fmt.Println("[PhishWatch] Gemini error:", err)
 		http.Error(w, "AI error", http.StatusInternalServerError)
 		return
 	}
+	fmt.Println("[PhishWatch] Gemini success")
 	resp := AskResponse{Answer: answer}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
