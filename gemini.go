@@ -12,7 +12,7 @@ import (
 func askGemini(prompt string) (string, error) {
 	geminiKey := os.Getenv("GEMINI_API_KEY")
 	fmt.Println("[PhishWatch] GEMINI_KEY length:", len(geminiKey))
-	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + geminiKey
+	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + geminiKey
 	body := map[string]interface{}{
 		"contents": []map[string]interface{}{
 			{
