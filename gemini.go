@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -11,7 +12,6 @@ import (
 var GEMINI_KEY = os.Getenv("GEMINI_API_KEY")
 
 func askGemini(prompt string) (string, error) {
-
 	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + GEMINI_KEY
 
 	body := map[string]interface{}{
@@ -37,10 +37,25 @@ func askGemini(prompt string) (string, error) {
 	var result map[string]interface{}
 	json.Unmarshal(respBody, &result)
 
-	candidates := result["candidates"].([]interface{})
-	content := candidates[0].(map[string]interface{})["content"].(map[string]interface{})
-	parts := content["parts"].([]interface{})
-	text := parts[0].(map[string]interface{})["text"].(string)
+	candidates, ok := result["candidates"].([]interface{})
+	if !ok || len(candidates) == 0 {
+		return "", fmt.Errorf("Gemini error: %s", string(respBody))
+	}
+
+	content, ok := candidates[0].(map[string]interface{})["content"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid content structure")
+	}
+
+	parts, ok := content["parts"].([]interface{})
+	if !ok || len(parts) == 0 {
+		return "", fmt.Errorf("invalid parts structure")
+	}
+
+	text, ok := parts[0].(map[string]interface{})["text"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid text structure")
+	}
 
 	return text, nil
 }
