@@ -10,43 +10,49 @@ import (
 )
 
 func askGemini(prompt string) (string, error) {
-	geminiKey := os.Getenv("GEMINI_API_KEY")
-	fmt.Println("[PhishWatch] GEMINI_KEY length:", len(geminiKey))
-	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=" + geminiKey
+	apiKey := os.Getenv("GEMINI_API_KEY")
+	fmt.Println("[PhishWatch] API KEY length:", len(apiKey))
+	url := "https://api.groq.com/openai/v1/chat/completions"
+
 	body := map[string]interface{}{
-		"contents": []map[string]interface{}{
-			{
-				"parts": []map[string]string{
-					{"text": prompt},
-				},
-			},
+		"model": "llama3-8b-8192",
+		"messages": []map[string]string{
+			{"role": "user", "content": prompt},
 		},
 	}
+
 	jsonData, _ := json.Marshal(body)
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
+
 	respBody, _ := io.ReadAll(resp.Body)
-	fmt.Println("[PhishWatch] Gemini raw response:", string(respBody))
+	fmt.Println("[PhishWatch] Groq raw response:", string(respBody))
+
 	var result map[string]interface{}
 	json.Unmarshal(respBody, &result)
-	candidates, ok := result["candidates"].([]interface{})
-	if !ok || len(candidates) == 0 {
-		return "", fmt.Errorf("Gemini error: %s", string(respBody))
+
+	choices, ok := result["choices"].([]interface{})
+	if !ok || len(choices) == 0 {
+		return "", fmt.Errorf("Groq error: %s", string(respBody))
 	}
-	content, ok := candidates[0].(map[string]interface{})["content"].(map[string]interface{})
+
+	message, ok := choices[0].(map[string]interface{})["message"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid message structure")
+	}
+
+	text, ok := message["content"].(string)
 	if !ok {
 		return "", fmt.Errorf("invalid content structure")
 	}
-	parts, ok := content["parts"].([]interface{})
-	if !ok || len(parts) == 0 {
-		return "", fmt.Errorf("invalid parts structure")
-	}
-	text, ok := parts[0].(map[string]interface{})["text"].(string)
-	if !ok {
-		return "", fmt.Errorf("invalid text structure")
-	}
+
 	return text, nil
 }
