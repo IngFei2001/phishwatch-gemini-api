@@ -15,7 +15,7 @@ func askGemini(prompt string) (string, error) {
 	url := "https://api.groq.com/openai/v1/chat/completions"
 
 	body := map[string]interface{}{
-		"model": "llama3-8b-8192",
+		"model": "llama-3.1-8b-instant",
 		"messages": []map[string]string{
 			{"role": "user", "content": prompt},
 		},
